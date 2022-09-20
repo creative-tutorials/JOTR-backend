@@ -1,0 +1,32 @@
+{
+  "name": "tunnel-node",
+  "version": "1.0.0",
+  "description": "a simple tunnel-sharing api",
+  "main": "index.js",
+  "scripts": {
+    "test": "yarn test",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/creative-tutorials/tunnel-node.git"
+  },
+  "keywords": [
+    "tunnel-app"
+  ],
+  "author": "creative-tutorials",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/creative-tutorials/tunnel-node/issues"
+  },
+  "homepage": "https://github.com/creative-tutorials/tunnel-node#readme",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.2",
+    "express": "^4.18.1",
+    "nodemon": "^2.0.20",
+    "share-localhost": "^1.0.4",
+    "token-generator": "^1.0.0"
+  }
+}
