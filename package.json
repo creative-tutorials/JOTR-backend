@@ -21,12 +21,16 @@
   },
   "homepage": "https://github.com/creative-tutorials/tunnel-node#readme",
   "dependencies": {
+    "@namecheap/easy-tunnel": "^1.0.0",
     "axios": "^0.27.2",
+    "colors": "^1.4.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.2",
     "express": "^4.18.1",
+    "mongoose": "^6.6.1",
+    "node-tunnel": "^4.0.1",
     "nodemon": "^2.0.20",
-    "share-localhost": "^1.0.4",
     "token-generator": "^1.0.0"
-  }
+  },
+  "devDependencies": {}
 }

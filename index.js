@@ -1,9 +1,13 @@
+const colors = require('colors');
+const mongoose = require('mongoose')
 let axios = require("axios");
+const easyTunnel = require('@namecheap/easy-tunnel');
 let express = require("express");
 let app = express();
 require("dotenv").config({ path: __dirname + "/.env" });
 let cors = require("cors");
 let allowedOrigins = [`${process.env.SERVER1}`, `${process.env.SERVER2}`];
+
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -30,16 +34,7 @@ const month = dateObj.getUTCMonth() + 1; //months from 1-12
 const day = dateObj.getUTCDate();
 const year = dateObj.getUTCFullYear();
 const newdate = year + "/" + month + "/" + day;
-const details = [
-  {
-    appid: 918271,
-    appname: "test",
-    releasedDate: newdate,
-    domainURL: "http://bit.ly",
-    hostURL: "http://localhost:3000",
-    status: "Shipped",
-  },
-];
+const details = [];
 
 app.get("/", (req, res) => {
   res.set("Content-Type", "application/json");
@@ -70,7 +65,7 @@ app.post("/send", function (req, res) {
   res.set("Content-Type", "application/json");
   const findID = details.find((findID) => findID.appid === req.body.appid);
   const randomID = Math.floor(Math.random() * 234560) + 123456;
-  //   const appid = req.body.appid;
+  req.body.releasedDate = newdate;
   const data = req.body;
   //   set api key on the header
   const key = process.env.SERVER_API_KEY;
@@ -86,8 +81,27 @@ app.post("/send", function (req, res) {
       res.status(300).send({ message: "That id is already in use" });
     } else {
       req.body.appid = randomID;
+      (async () => {
+        const aPort = req.body.Port;
+        console.log(aPort);
+
+        const tunnel = await easyTunnel({ port: aPort });
+        
+        // the assigned public url for your tunnel
+        // i.e. https://abcdefgjhij.localtunnel.me
+        let requestedPort = details[details.length - 1].Port;
+        tunnel.url;
+        console.log(tunnel.url);
+        requestedPort = tunnel.url;
+        console.log(requestedPort)
+        req.body.domainURL = requestedPort;
+        tunnel.on('close', () => {
+          console.log("tunnel closed")
+        });
+      })();
       details.push(data);
       res.status(200).send(data);
+      
     }
   };
 
@@ -115,6 +129,7 @@ app.put("/change/status", (req, res) => {
     if (!newstatus) {
       res.status(401).send({ message: "Invalid Application ID" });
     } else {
+      /* Changing the status of the application. */
       newstatus.status = req.body.status;
       res.status(200).send(newstatus);
     }
@@ -128,8 +143,7 @@ app.put("/change/status", (req, res) => {
     res.status(401).send({ message: "API_KEY is incorrect" });
   }
 });
-
-/* A route that is used to track the application id. */
+/* This is a function that is used to find an app information via it's id. */
 app.get("/track/:id", function (req, res) {
   const trackId = details.find(
     (trackId) => trackId.appid === parseInt(req.params.id)
@@ -140,6 +154,37 @@ app.get("/track/:id", function (req, res) {
     res.status(200).send(trackId);
   }
 });
+
+/* Deleting the application via id. */
+app.delete("/delete/:id", function (req, res) {
+  const config = details.find(
+    (config) => config.appid === parseInt(req.params.id)
+  );
+  if (!config) {
+    res.status(404).send({ message: "Your app does not exist" });
+  } else {
+    // delete the app
+    const index = details.indexOf(config);
+    details.splice(index, 1);
+    res.status(200).send({ message: "Your app has been deleted" });
+  }
+});
+
+
+async function connect() { 
+  const url = "mongodb+srv://nanotech:6nL3MLSVh0zuZhSZ@datacluster.tjkcqal.mongodb.net/?retryWrites=true&w=majority"
+   // required libs : mongoose | colors
+ // run the following command
+ // npm i mongoose colors
+
+ mongoose.connect(url , { useNewUrlParser : true, useUnifiedTopology : true})
+ .then((res)=>console.log('> Connected...'.bgCyan))
+ .catch(err=>console.log(`> Error while connecting to mongoDB : ${err.message}`.underline.red ))
+ }
+
+ connect();
+
+
 
 app
   .listen(PORT, function () {
