@@ -1,7 +1,8 @@
-const colors = require('colors');
-const mongoose = require('mongoose')
 let axios = require("axios");
-const easyTunnel = require('@namecheap/easy-tunnel');
+/* Importing the connectToDb and getDb functions from the db.js file. */
+const { connectToDb, getDb } = require("./db");
+var colors = require('colors');
+const easyTunnel = require("@namecheap/easy-tunnel");
 let express = require("express");
 let app = express();
 require("dotenv").config({ path: __dirname + "/.env" });
@@ -35,6 +36,19 @@ const day = dateObj.getUTCDate();
 const year = dateObj.getUTCFullYear();
 const newdate = year + "/" + month + "/" + day;
 const details = [];
+
+
+let db;
+
+/* Connecting to the MongoDB database. */
+connectToDb((err) => {
+  if (!err) {
+    console.log("Connected to MongoDb succesfully".green);
+    db = getDb();
+  } else {
+    console.log('Error connecting to MongoDb'.underline.red);
+  }
+});
 
 app.get("/", (req, res) => {
   res.set("Content-Type", "application/json");
@@ -78,36 +92,47 @@ app.post("/send", function (req, res) {
    */
   const Validate = () => {
     if (findID) {
-      res.status(300).send({ message: "That id is already in use" });
+      res.status(300).send({ message: "That app is already in use" });
     } else {
       req.body.appid = randomID;
+      req.body.status = 'OK';
       (async () => {
         const aPort = req.body.Port;
-        console.log(aPort);
 
         const tunnel = await easyTunnel({ port: aPort });
-        
+
         // the assigned public url for your tunnel
         // i.e. https://abcdefgjhij.localtunnel.me
         let requestedPort = details[details.length - 1].Port;
-        tunnel.url;
+        tunnel.url; /**
+        * Returns the URL of the page that the filter is applied to.
+        * @returns {string} The URL of the page that the filter is applied to.
+        */
         console.log(tunnel.url);
         requestedPort = tunnel.url;
-        console.log(requestedPort)
+        console.log(requestedPort);
         req.body.domainURL = requestedPort;
-        tunnel.on('close', () => {
-          console.log("tunnel closed")
+        tunnel.on("close", () => {
+          console.log("tunnel closed");
         });
       })();
       details.push(data);
       res.status(200).send(data);
-      
+      /**
+       * Inserts the given data into the database.       
+       * @param {object} data - the data to insert into the database.       
+       * @returns None       
+       */
+      db.collection('users').insertOne(data).then(result => {
+        console.log(result);
+      })
+      .catch(err => {
+        console.log(err)
+      })
     }
   };
 
   if (apiKey === key) {
-    /* A function that checks if the id is existing, if the id is not found, and if the id is found and
-    the id is less than "6". */
     Validate();
   } else {
     res.status(401).send({ message: "API_KEY is incorrect" });
@@ -148,6 +173,11 @@ app.get("/track/:id", function (req, res) {
   const trackId = details.find(
     (trackId) => trackId.appid === parseInt(req.params.id)
   );
+  /**
+   * A function that takes in a track ID and returns a response with the track ID.           
+   * @param {string} trackId - the track ID to return           
+   * @returns None           
+   */
   if (!trackId) {
     res.status(404).send({ message: "Invalid app ID*" });
   } else {
@@ -169,22 +199,6 @@ app.delete("/delete/:id", function (req, res) {
     res.status(200).send({ message: "Your app has been deleted" });
   }
 });
-
-
-async function connect() { 
-  const url = "mongodb+srv://nanotech:6nL3MLSVh0zuZhSZ@datacluster.tjkcqal.mongodb.net/?retryWrites=true&w=majority"
-   // required libs : mongoose | colors
- // run the following command
- // npm i mongoose colors
-
- mongoose.connect(url , { useNewUrlParser : true, useUnifiedTopology : true})
- .then((res)=>console.log('> Connected...'.bgCyan))
- .catch(err=>console.log(`> Error while connecting to mongoDB : ${err.message}`.underline.red ))
- }
-
- connect();
-
-
 
 app
   .listen(PORT, function () {
