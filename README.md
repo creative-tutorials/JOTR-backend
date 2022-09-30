@@ -1,2 +1,2 @@
-# JOTR Backendless 
+# JOTR Backend
 The backend to JOTR
